@@ -389,6 +389,7 @@ class Move():
                  "e":4,"f":5,"g":6,"h":7}
     colsToFiles={v:k for k,v in filesToCols.items()}
 
+
     def __init__(self,startSq,endSq,board, isEnpassantMove=False, isCastleMove=False):
         self.startRow=startSq[0]
         self.startCol=startSq[1]
