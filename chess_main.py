@@ -1,6 +1,6 @@
 #This is the main driver file, it will be responsible for handling user input and displaying the current GameState object
 import pygame as p
-import chess_engine
+import chess_engine, ChessAI
 
 WIDTH=HEIGHT=512
 DIMENSION=8 #8x8 chess board
@@ -12,7 +12,7 @@ IMAGES={}
 def loadImages():
     pieces=['wP','wR','wN','wB','wK','wQ','bP','bR','bN','bB','bK','bQ']
     for piece in pieces:
-        IMAGES[piece]=p.transform.scale(p.image.load("Chess-engine-in-python/images/"+piece+".png"),(SQ_SIZE,SQ_SIZE))
+        IMAGES[piece]=p.transform.scale(p.image.load("images/"+piece+".png"),(SQ_SIZE,SQ_SIZE))
     #Note: we can access an image by saying 'IMAGES['wP']'
 
 #The main driver for our code. This will handle user input and updating the graphics
@@ -30,13 +30,16 @@ def main():
     sqSelected=() #no square is selected, keep track of the last click of the user (tuple:(row,col))
     playerClicks=[] #keep track of player clicks (two tuples: [(6,4),(4,4)])
     gameOver=False
+    player_one=True #if a human is playing white, then this will be True. If an AI is playing, then False
+    player_two=False #same as above but for black
     while running:
+        human_turn=(gs.whiteToMove and player_one) or (not gs.whiteToMove and player_two)
         for e in p.event.get():
             if e.type==p.QUIT:
                 running=False
             #mouse handler
             elif e.type==p.MOUSEBUTTONDOWN:
-                if not gameOver:
+                if not gameOver and human_turn:
                     location=p.mouse.get_pos() #(x,y) location of mouse
                     col=location[0]//SQ_SIZE
                     row=location[1]//SQ_SIZE
@@ -71,6 +74,15 @@ def main():
                     playerClicks=[]
                     moveMade=False
                     animate=False
+        #AI move finder logic
+        if not gameOver and not human_turn:
+            AImove=ChessAI.find_best_move(gs,validMoves)
+            if AImove is None:
+                AImove=ChessAI.find_random_moves(validMoves)
+            gs.makeMove(AImove)
+            moveMade=True
+            animate=True
+
         if moveMade:
             if animate:
                 animatingMove(gs.moveLog[-1],screen,gs.board,clock)
