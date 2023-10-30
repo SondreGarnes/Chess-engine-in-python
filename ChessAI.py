@@ -8,47 +8,58 @@ DEPTH=3
 def find_random_moves(validMoves):
     return validMoves[random.randint(0,len(validMoves)-1)]
 
-def find_best_move_minmax(gs,validMoves):
-    global nextMove
-    find_move_minmax(gs,validMoves,DEPTH,gs.whiteToMove)
+def find_best_move(gs,validMoves):
+    global nextMove,counter
+    counter=0
+    find_move_negamax_alphabeta(gs,validMoves,DEPTH,-CHECKMATE, CHECKMATE, 1 if gs.whiteToMove else -1)
+    #find_move_negamax(gs,validMoves,DEPTH,1 if gs.whiteToMove else -1)
+    print(counter)
     return nextMove
     
-def find_move_minmax(gs,validMoves,depth,whiteToMove ):
-    global nextMove
+def find_move_negamax(gs,validMoves,depth,turn_multiplier):
+    global nextMove,counter
+    counter+=1
     if depth==0:
-        return score_board(gs)
-    if whiteToMove:
-        maxScore=-CHECKMATE
-        random.shuffle(validMoves)
-        for move in validMoves:
-            gs.makeMove(move)
-            nextMoves=gs.getValidMoves()
-            score=find_move_minmax(gs,nextMoves,depth-1,False)
-            if score>maxScore:
-                maxScore=score
-                if depth==DEPTH:
-                    nextMove=move
-            gs.undoMove()
-        return maxScore
-    else:
-        minScore=CHECKMATE
-        random.shuffle(validMoves)
-        for move in validMoves:
-            gs.makeMove(move)
-            nextMoves=gs.getValidMoves()
-            score=find_move_minmax(gs,nextMoves,depth-1,True)
-            if score<minScore:
-                minScore=score
-                if depth==DEPTH:
-                    nextMove=move
-            gs.undoMove()
-        return minScore
+        return turn_multiplier * score_board(gs)
+    maxScore=-CHECKMATE
+    random.shuffle(validMoves)
+    for move in validMoves:
+        gs.makeMove(move)
+        next_Moves=gs.getValidMoves()
+        score=-find_move_negamax_alphabeta(gs,next_Moves,depth-1,-turn_multiplier)
+        if score > maxScore:
+            maxScore=score
+            if depth==DEPTH:
+                nextMove=move
 
-    
-    
-    
+        gs.undoMove()
+        
+    return maxScore
 
+def find_move_negamax_alphabeta(gs,validMoves,depth,alpha,beta,turn_multiplier):
+    global nextMove,counter
+    counter+=1
+    if depth==0:
+        return turn_multiplier * score_board(gs)
+    #move ordering algorithm here
+    maxScore=-CHECKMATE
+    random.shuffle(validMoves)
+    for move in validMoves:
+        gs.makeMove(move)
+        next_Moves=gs.getValidMoves()
+        score=-find_move_negamax_alphabeta(gs,next_Moves,depth-1,-beta,-alpha,-turn_multiplier)
+        if score > maxScore:
+            maxScore=score
+            if depth==DEPTH:
+                nextMove=move
+        gs.undoMove()
+        if maxScore > alpha:#pruning happens here
+            alpha=maxScore
+        if alpha>=beta:
+            break
 
+    return maxScore
+    
 
 def find_best_move_greedy(gs,valid_Moves):
     turn_multiplier=1 if gs.whiteToMove else -1
